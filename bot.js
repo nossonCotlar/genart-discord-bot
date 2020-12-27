@@ -1,3 +1,5 @@
+#!/usr/bin/env nodejs
+
 require('dotenv').config();
 const Discord = require('discord.js');
 const seedrandom = require('seedrandom');
