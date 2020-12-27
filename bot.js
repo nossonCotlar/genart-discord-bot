@@ -49,9 +49,9 @@ function genArt(message, seed){
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    funcArray[2](canvas, ctx);
+    //funcArray[2](canvas, ctx);
     funcArray[0](canvas, ctx);
-    
+
     let out = fs.createWriteStream(`./art/${seed}.png`);
     let stream = canvas.createPNGStream();
     stream.pipe(out);
