@@ -1,0 +1,9 @@
+runtime: nodejs12
+
+env_variables:
+  TOKEN: 'NzkyNTcyMjc4ODY0ODcxNDM2.X-fqdA.HP1a05tH5aoIGcew_BtS_Z91sec'
+  GCLOUD_STORAGE_BUCKET: 'genart'
+  NODE_OPTIONS: ''
+
+automatic_scaling:
+  min_instances: 1

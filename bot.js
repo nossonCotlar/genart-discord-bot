@@ -3,7 +3,8 @@
 require('dotenv').config();
 const Discord = require('discord.js');
 const seedrandom = require('seedrandom');
-//const p5 = require('p5');
+const {Storage} = require('@google-cloud/storage');
+
 
 const fs = require('fs');
 const { createCanvas, loadImage } = require('canvas');
@@ -22,6 +23,10 @@ const fontArray = [
     'Bookman', 
     'Avant Garde'
 ];
+
+const gc = new Storage({keyFilename: 'key.json', projectId: 'genart-299908'});
+const bucket = gc.bucket(process.env.GCLOUD_STORAGE_BUCKET);
+
 let words = fs.readFileSync('bank.txt', 'utf8').split('\n');
 
 client.once('ready', () => {
@@ -35,6 +40,7 @@ client.login(process.env.TOKEN);
 client.on('message', message => {
     
     if(message.content.startsWith("-genart ")){
+
         let seed = message.content.substring(8);
         seedrandom(seed, { global: true });
         genArt(message, seed);
@@ -52,13 +58,15 @@ function genArt(message, seed){
     //funcArray[2](canvas, ctx);
     funcArray[0](canvas, ctx);
 
-    let out = fs.createWriteStream(`./art/${seed}.png`);
+    let out = bucket.file(`out-${seed}.png`).createWriteStream({resumable: false});
     let stream = canvas.createPNGStream();
     stream.pipe(out);
-    out.on('finish', () => sendArt(message, 'Generated with seed: ' + seed, `./art/${seed}.png`));
+    out.on('finish', () => sendArt(message, `Generated with seed: **${seed}**`, 
+    encodeURI(`https://storage.googleapis.com/${process.env.GCLOUD_STORAGE_BUCKET}/out-${seed}.png`)));
+    console.log(`Done, generated stuff with: ${seed}`);
+
+    
 }
-
-
 
 function putLines(canvas, ctx){
     ctx.lineWidth = map(Math.random(), 0, 1, 2, 7);
@@ -68,7 +76,6 @@ function putLines(canvas, ctx){
     let hueStop = Math.random() * 360;
     let hue = hueStart;
     let hueInc = (hueStop - hueStart) / amt;
-    console.log(hueInc);
     
     for(let i = 0; i < amt; i++){
         ctx.beginPath();
@@ -126,5 +133,6 @@ function map(value, start1, stop1, start2, stop2){
 }
 
 function sendArt(message, caption, path){
+    //message.channel.send(`${caption}\n${path}`);
     message.channel.send(caption, {files: [path]});
 }
