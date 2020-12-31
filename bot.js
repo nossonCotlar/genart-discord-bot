@@ -1,33 +1,12 @@
-#!/usr/bin/env nodejs
+#!/usr/bin/env node
 
 require('dotenv').config();
 const Discord = require('discord.js');
-const seedrandom = require('seedrandom');
-const {Storage} = require('@google-cloud/storage');
-
-
 const fs = require('fs');
-const { createCanvas, loadImage } = require('canvas');
+const https = require('https');
 const client = new Discord.Client();
-const funcArray = [
-    putLines, 
-    putOvals, 
-    putText
-];
-const fontArray = [
-    'Arial', 
-    'Times', 
-    'Courier', 
-    'Palatino', 
-    'Garamond', 
-    'Bookman', 
-    'Avant Garde'
-];
+const qs = require('qs');
 
-const gc = new Storage({keyFilename: 'key.json', projectId: 'genart-299908'});
-const bucket = gc.bucket(process.env.GCLOUD_STORAGE_BUCKET);
-
-let words = fs.readFileSync('bank.txt', 'utf8').split('\n');
 
 client.once('ready', () => {
     console.log('LETS FUCKING GOOOOOOO');
@@ -35,104 +14,47 @@ client.once('ready', () => {
 });
 
 client.login(process.env.TOKEN);
-//client.setActivity("testing"); 
 
 client.on('message', message => {
-    
-    if(message.content.startsWith("-genart ")){
+    let msgTokens = message.content.split(' ');
+    if(msgTokens[0] != '-genart') return;
 
-        let seed = message.content.substring(8);
-        seedrandom(seed, { global: true });
-        genArt(message, seed);
-    }
+    let engine, seed;
+    
+    if(msgTokens[1] && msgTokens[1].startsWith('-')){
+        engine = msgTokens[1].substring(1);
+        if(msgTokens[2]) seed = msgTokens.slice(2).join(' ');
+    } 
+    else if(msgTokens[1]) seed = msgTokens.slice(1).join(' ');
+
+
+    
+    let qPath = qs.stringify({seed: seed, engine: engine, sync: true});
+    console.log(qPath);
+
+    let options = {
+        hostname: process.env.GENART_ENDPOINT, 
+        port: 443, 
+        path: '/?' + qPath, 
+        method: 'GET'
+    };
+    console.log(options);
+    let req = https.request(options, (res) => {
+        let body = '';
+        res.on('data', (data) => {
+            body += data;
+        });
+    
+        res.on('end', _ => {
+            if(res.statusCode != 200){
+                message.channel.send("Yikes, didn't like that");
+                return;
+            } 
+            let bodyObj = JSON.parse(body);
+            //console.log(bodyObj);
+            message.channel.send(`Generated with seed **${bodyObj.seed}** on engine **${bodyObj.engine}**`, {files: [bodyObj.link]});
+        });
+    }).end();
+
 });
 
-function genArt(message, seed){
-    let canvas = createCanvas(500, 500);
-    const ctx = canvas.getContext('2d');
-    let width = canvas.width;
-    let height = canvas.height;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    //funcArray[2](canvas, ctx);
-    funcArray[0](canvas, ctx);
-
-    let out = bucket.file(`out-${seed}.png`).createWriteStream({resumable: false});
-    let stream = canvas.createPNGStream();
-    stream.pipe(out);
-    out.on('finish', () => sendArt(message, `Generated with seed: **${seed}**`, 
-    encodeURI(`https://storage.googleapis.com/${process.env.GCLOUD_STORAGE_BUCKET}/out-${seed}.png`)));
-    console.log(`Done, generated stuff with: ${seed}`);
-
-    
-}
-
-function putLines(canvas, ctx){
-    ctx.lineWidth = map(Math.random(), 0, 1, 2, 7);
-    
-    let amt = map(Math.random(), 0, 1, 1, 30);
-    let hueStart = Math.random() * 360;
-    let hueStop = Math.random() * 360;
-    let hue = hueStart;
-    let hueInc = (hueStop - hueStart) / amt;
-    
-    for(let i = 0; i < amt; i++){
-        ctx.beginPath();
-        ctx.strokeStyle = `hsla(${hue}, 100%, 50%, 100)`;
-        ctx.fillStyle = `hsla(${hue}, 100%, 50%, 100)`;
-        hue += hueInc;
-
-        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
-        let lineType = Math.floor(Math.random() * 4);
-        switch(lineType){
-            case 1:
-                ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height); 
-                break;
-            case 2:
-                ctx.bezierCurveTo(Math.random() * canvas.width, 
-                Math.random() * canvas.height, 
-                Math.random() * canvas.width, 
-                Math.random() * canvas.height, 
-                Math.random() * canvas.width, 
-                Math.random() * canvas.height);
-                break;
-            case 3:
-                ctx.quadraticCurveTo(Math.random() * canvas.width, 
-                Math.random() * canvas.height, 
-                Math.random() * canvas.width, 
-                Math.random() * canvas.height);
-                break;
-            case 4:
-                ctx.arcTo(Math.random() * canvas.width, 
-                Math.random() * canvas.height, 
-                Math.random() * canvas.width, 
-                Math.random() * canvas.height, 
-                Math.random() * 100);
-                break;
-        }
-        
-        if(Math.random() > 0.8) ctx.fill();
-        else ctx.stroke();
-    }
-}
-
-function putOvals(ctx, seed){
-
-}
-
-function putText(canvas, ctx){
-    ctx.font = `${Math.floor(Math.random() * 300 + 100)}px ${fontArray[Math.floor(Math.random() * fontArray.length)]}`;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = `hsla(${Math.random() * 360}, 100%, 50%, 100)`;
-    ctx.fillText(words[Math.floor(Math.random() * words.length)], Math.random() * canvas.width, Math.random() * canvas.height);
-}
-
-function map(value, start1, stop1, start2, stop2){
-    return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
-}
-
-function sendArt(message, caption, path){
-    //message.channel.send(`${caption}\n${path}`);
-    message.channel.send(caption, {files: [path]});
-}
