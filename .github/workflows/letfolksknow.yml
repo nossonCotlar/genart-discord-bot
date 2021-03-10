@@ -25,7 +25,7 @@ jobs:
           server_port: 465
           username: ${{secrets.MAIL_USERNAME}}
           password: ${{secrets.MAIL_PASSWORD}}
-          subject: A GitHub action from $TAG in $GITHUB.repository was run
+          subject: A GitHub action from $GITHUB_REF in $GITHUB_REPOSITORY was run
           body: |
             That's all we got for now chief. 
             You wanted an actual email? HTML? Markdown? 
