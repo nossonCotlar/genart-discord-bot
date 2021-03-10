@@ -1,0 +1,36 @@
+name: Spread the Word!
+
+env: 
+  APPLICABLE_BRANCH: feature/actions-testing
+
+on: 
+  push: 
+    branches:
+      - $APPLICABLE_BRANCH
+
+jobs: 
+  setup: 
+    name: Set this bitch up
+    runs-on: ubuntu-20.04
+    steps: 
+      - uses: actions/checkout@v2
+
+      - name: download dependencies
+        run: npm install
+
+      - name: Send email
+        uses: dawidd6/action-send-mail@v2.5.0
+        with: 
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{secrets.MAIL_USERNAME}}
+          password: ${{secrets.MAIL_PASSWORD}}
+          subject: A GitHub action from $TAG in $GITHUB.repository was run
+          body: |
+            That's all we got for now chief. 
+            You wanted an actual email? HTML? Markdown? 
+            Yikes dawg
+            Actually here's something: 
+            $(docker images)
+          to: ncotlar@macrofab.com
+          from: Nosson via GitHub Actions
