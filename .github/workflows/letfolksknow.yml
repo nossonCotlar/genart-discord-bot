@@ -27,12 +27,12 @@ jobs:
           server_port: 465
           username: ${{secrets.MAIL_USERNAME}}
           password: ${{secrets.MAIL_PASSWORD}}
-          subject: A GitHub action from ${env.GITHUB_REF} in ${{env.GITHUB_REPOSITORY}} was run
+          subject: A GitHub action from ${{github.ref}} in ${{github.repository}} was run
           body: |
             That's all we got for now chief. 
             You wanted an actual email? HTML? Markdown? 
             Yikes dawg
             Actually here's something: 
-            ${{env.GITHUB_ACTION}}
+            ${{github.action}}
           to: ncotlar@macrofab.com
           from: Nosson via GitHub Actions
