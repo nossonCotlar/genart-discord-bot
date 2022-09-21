@@ -1,21 +1,24 @@
 {
   "name": "genart",
-  "version": "1.0.1",
+  "version": "1.1.1",
   "description": "Generates generative art in discord",
-  "main": "bot.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node bot.js"
+    "start": "node index.js"
   },
   "author": "Rood",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/storage": "^5.3.0",
-    "canvas": "^2.6.1",
-    "discord.js": "^12.5.1",
-    "dotenv": "^8.2.0",
-    "node": "^14.0.0",
+    "axios": "^0.27.2",
+    "discord.js": "^14.3.0",
+    "dotenv": "^16.0.2",
+    "node": "^16.17.0",
     "qs": "^6.9.4",
     "seedrandom": "^3.0.5"
+  },
+  "type": "module",
+  "devDependencies": {
+    "nodemon": "^2.0.20"
   }
 }
